@@ -3,6 +3,7 @@ from rclpy.node import Node
 
 from rcl_interfaces.msg import Log
 from rclpy.time import Time
+from std_msgs.msg import String
 
 
 import json
@@ -29,7 +30,7 @@ log_level = {10: 'DEBUG',
              50: 'FATAL'}
 
 
-class Log2JSONSubscriber(Node):
+class Log2JsonNode(Node):
 
     def __init__(self):
         super().__init__('log2json')
@@ -40,31 +41,44 @@ class Log2JSONSubscriber(Node):
             10)
         self.subscription  # prevent unused variable warning
 
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
+
+    def publisher(self, json_message):
+        msg = String()
+        msg.data = json_message
+        self.publisher_.publish(msg)
+        print (json_message)
+        # self.get_logger().info('Publishing: "%s"' % msg.data)
+        
+
     def listener_callback(self, msg):
         #print(msg.__slots__)
         json_data = {
-            'RealTime'      : self.get_clock().now().nanoseconds,
-            'Debug_level'   : log_level[msg.level],
-            'Timestamp'     : msg.stamp.sec,
-            'Package'       : msg.file,
-            'Function'      : msg.function,
-            'Line'          : msg.line,
-            'Name'          : msg.name,
-            'Message'       : msg.msg
+            'realtime'      : self.get_clock().now().nanoseconds,
+            'debuglevel'    : log_level[msg.level],
+            'timestamp'     : msg.stamp.sec,
+            'package'       : msg.file,
+            'function'      : msg.function,
+            'line'          : msg.line,
+            'name'          : msg.name,
+            'message'       : msg.msg
         }
         print(json.dumps(json_data, indent=4))
-        
+        self.publisher(json.dumps(json_data, indent=4))
+
+
+    
 
 def main(args=None):
     rclpy.init(args=args)
 
-    simple_Log2JSONSubscriber = Log2JSONSubscriber()
+    simple_Log2JsonNode = Log2JsonNode()
     # print (minimal_subscriber.get_clock().now())
 
-    rclpy.spin(simple_Log2JSONSubscriber)
+    rclpy.spin(simple_Log2JsonNode)
 
     # Destroy the node explicitly
-    simple_Log2JSONSubscriber.destroy_node()
+    simple_Log2JsonNode.destroy_node()
     rclpy.shutdown()
 
 
